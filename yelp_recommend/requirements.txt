@@ -1,0 +1,7 @@
+celery
+flask
+flask_googlemaps
+flask_wtf
+paramiko
+pyspark
+numpy

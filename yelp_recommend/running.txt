@@ -1,0 +1,123 @@
+Installation instructions:
+
+Clone the whole project. In the following instructions, we assume you are in the root folder where you can see the folder WebFrontend. Please note that due to file size limitation on GitLab and Github, trained models and json files of the data are not included in the GitLab project. Please download the latest Yelp dataset from Yelp Challenge website https://www.yelp.com/dataset/challenge.
+
+
+Instructions to execute ETL python files:
+
+Execute load_cassandra.py:
+	spark-submit --packages datastax:spark-cassandra-connector:2.3.1-s_2.11 load_cassandra.py /user/dca98/yelp/dataset/yelp_academic_dataset_review.json yelp_db yelp_review
+	spark-submit --packages datastax:spark-cassandra-connector:2.3.1-s_2.11 load_cassandra.py /user/dca98/yelp/dataset/yelp_academic_dataset_business.json yelp_db yelp_business
+	spark-submit --packages datastax:spark-cassandra-connector:2.3.1-s_2.11 load_cassandra.py /user/dca98/yelp/dataset/yelp_academic_dataset_checkin.json yelp_db yelp_checkin
+	spark-submit --packages datastax:spark-cassandra-connector:2.3.1-s_2.11 load_cassandra.py /userca98/yelp/dataset/yelp_academic_dataset_user.json yelp_db yelp_user
+
+Execute yelp_EDA.py:
+	spark-submit --packages datastax:spark-cassandra-connector:2.3.1-s_2.11 yelp_EDA.py yelp_db yelp_business_lasvegas
+	spark-submit --packages datastax:spark-cassandra-connector:2.3.1-s_2.11 yelp_EDA.py yelp_db yelp_review_lasvegas
+
+Execute yelp_sentiment.py:
+	spark-submit yelp_sentiment.py yelp_review_lasvegas.json keras_nn_model yelp_sentiment
+
+Execute TFIDF_LDA.py
+	spark-submit TFIDF_LDA.py review_parquet tfidf_lda_model
+
+Execute Word2Vec.py
+	spark-submit Word2Vec.py review_parquet yelp_bus_parquet pipeline_wordvec_mdl
+
+Execute collaborative_filtering.py
+	spark-submit collaborative_filtering.py /user/dca98/yelp/dataset/yelp_academic_dataset_business.json /user/dca98/yelp/dataset/yelp_academic_dataset_user.json /user/dca98/yelp/dataset/yelp_academic_dataset_review.json
+
+Execute collab_recom.py used for html output
+	spark-submit collab_recom.py /user/dca98/als_model /user/dca98/collab_business_Idnum /user/dca98/collab_user_Idnum gJhzYU76x7-U23jODY-MRQ
+
+Execute friend_user.py
+	spark-submit friend_user.py /user/dca98/yelp/dataset/yelp_academic_dataset_user.json /user/dca98/yelp/dataset/yelp_academic_dataset_review.json /user/dca98/yelp/dataset/yelp_academic_dataset_business.json WptCfZ_h6pdnkBJx4ha8Aw
+
+Execute content_userid.py
+	spark-submit content_userid.py /user/dca98/yelp/content_userid/reviewLV_parquet /user/dca98/yelp_bus_parquet /user/dca98/yelp/content_userid/content_userid WptCfZ_h6pdnkBJx4ha8Aw
+
+
+Execute content_recom.py
+	spark-submit content_recom.py /user/dca98/review_json.json /user/dca98/yelp_bus_parquet /user/dca98/tfidf_model /user/dca98/tfidf_lda_model /user/dca98/yelp_review_sentiment /user/dca98/all_business_parquet chicken
+
+
+
+Instructions to run the web application:
+
+If linking to a remote cluster, use the command that links the port of 5000 from cluster localhost to the port 5000 of your local computer’s localhost. Log into your own account. We assume we use the SFU Big Data cloud cluster.
+
+ssh -L 50070:master.sfucloud.ca:50070 -L 8088:master.sfucloud.ca:8088 -L 5000:127.0.0.1:5000 <username>@gateway.sfucloud.ca
+
+Next, if you create the project for the first time, create a python virtual environment.
+
+virtualenv flaskyelp
+
+Activate your virtual environment.
+
+cd flaskyelp
+source bin/activate
+
+Head back to the root folder of the project.
+
+cd ..
+
+If you run for the first time, you need to install the following python dependencies:
+celery
+flask
+flask_googlemaps
+flask_wtf
+paramiko
+pyspark
+numpy
+
+
+You can simple install by running the requirements.txt directly.
+
+pip install -r WebFrontend/requirements.txt
+
+Use this command to start running the project with pyspark, flask and celery (celery-spark provided by Prof. Greg Baker).
+
+spark-submit --master=local[*] WebFrontend/main.py
+
+We use local pyspark to run so that we can connect to the hfs system.
+
+You can now go to the browser of your choice and use the web application by entering in the address bar:
+localhost:5000
+
+
+Command list to run the web application - first time running:
+
+ssh -L 50070:master.sfucloud.ca:50070 -L 8088:master.sfucloud.ca:8088 -L 5000:127.0.0.1:5000 <username>@gateway.sfucloud.ca
+
+virtualenv flaskyelp
+cd flaskyelp
+source bin/activate
+cd ..
+pip install -r WebFrontend/requirements.txt
+spark-submit --master=local[*] WebFrontend/main.py
+
+
+Command list to run the web application - not first time running:
+
+ssh -L 50070:master.sfucloud.ca:50070 -L 8088:master.sfucloud.ca:8088 -L 5000:127.0.0.1:5000 <username>@gateway.sfucloud.ca
+
+cd flaskyelp
+source bin/activate
+cd ..
+spark-submit --master=local[*] WebFrontend/main.py
+
+
+If the port 5000 is being used, we can kill the process using it: 
+
+lsof -i :5000
+kill <pid>
+*<pid> refers to the pid shown 
+
+An example of random user IDs that can be tested on the Flask web application. In fact, you can enter any user ID that shows up in the database. You can look at the dataset and enter any user ID. It will work.
+
+gJhzYU76x7-U23jODY-MRQ
+WptCfZ_h6pdnkBJx4ha8Aw
+2WniIUDY7MqU1rNL1nwolQ
+Oz8Bp1NY-Szz4lvSbVsV4Q
+xFsVOEYuGhl8sHrIBdy3kQ
+
